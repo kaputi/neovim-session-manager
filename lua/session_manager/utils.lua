@@ -1,17 +1,23 @@
 local config = require('session_manager.config')
 local scandir = require('plenary.scandir')
 local Path = require('plenary.path')
-local utils = {is_session=false}
+local utils = { is_session = false }
 
 function utils.get_last_session_filename()
   if not Path:new(config.sessions_dir):is_dir() then
-    vim.notify('Sessions list is empty', vim.log.levels.INFO, { title = 'Session manager' })
+    vim.notify(
+      'Sessions list is empty',
+      vim.log.levels.INFO,
+      { title = 'Session manager' }
+    )
     return nil
   end
 
   local most_recent_filename = nil
   local most_recent_timestamp = 0
-  for _, session_filename in ipairs(scandir.scan_dir(tostring(config.sessions_dir))) do
+  for _, session_filename in
+    ipairs(scandir.scan_dir(tostring(config.sessions_dir)))
+  do
     if utils.session_filename_to_dir(session_filename):is_dir() then
       local timestamp = vim.fn.getftime(session_filename)
       if most_recent_timestamp < timestamp then
@@ -28,7 +34,10 @@ function utils.load_session(filename, discard_current)
     -- Ask to save files in current session before closing them
     for _, buffer in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_get_option(buffer, 'modified') then
-        local choice = vim.fn.confirm('The files in the current session have changed. Save changes?', '&Yes\n&No\n&Cancel')
+        local choice = vim.fn.confirm(
+          'The files in the current session have changed. Save changes?',
+          '&Yes\n&No\n&Cancel'
+        )
         if choice == 3 or choice == 0 then
           return -- Cancel
         elseif choice == 1 then
@@ -40,7 +49,7 @@ function utils.load_session(filename, discard_current)
   end
 
   -- Stop all LSP clients first
-  vim.lsp.stop_client(vim.lsp.get_active_clients())
+  vim.lsp.stop_client(vim.lsp.get_clients())
 
   -- Scedule buffers cleanup to avoid callback issues and source the session
   vim.schedule(function()
@@ -84,10 +93,19 @@ end
 
 function utils.get_sessions()
   local sessions = {}
-  for _, session_filename in ipairs(scandir.scan_dir(tostring(config.sessions_dir))) do
+  for _, session_filename in
+    ipairs(scandir.scan_dir(tostring(config.sessions_dir)))
+  do
     local dir = utils.session_filename_to_dir(session_filename)
     if dir:is_dir() then
-      table.insert(sessions, { timestamp = vim.fn.getftime(session_filename), filename = session_filename, dir = dir })
+      table.insert(
+        sessions,
+        {
+          timestamp = vim.fn.getftime(session_filename),
+          filename = session_filename,
+          dir = dir,
+        }
+      )
     else
       Path:new(session_filename):rm()
     end
@@ -97,7 +115,9 @@ function utils.get_sessions()
   end)
 
   -- If the last session is the current one, then preselect the previous one
-  if #sessions >= 2 and sessions[1].filename == utils.dir_to_session_filename() then
+  if
+    #sessions >= 2 and sessions[1].filename == utils.dir_to_session_filename()
+  then
     sessions[1], sessions[2] = sessions[2], sessions[1]
   end
 
@@ -121,7 +141,8 @@ function utils.dir_to_session_filename(dir)
 end
 
 function utils.is_normal_buffer(buffer)
-  return #vim.api.nvim_buf_get_option(buffer, 'buftype') == 0 and vim.api.nvim_buf_get_option(buffer, 'buflisted')
+  return #vim.api.nvim_buf_get_option(buffer, 'buftype') == 0
+    and vim.api.nvim_buf_get_option(buffer, 'buflisted')
 end
 
 function utils.is_normal_buffer_present()
