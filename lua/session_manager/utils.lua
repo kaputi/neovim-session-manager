@@ -33,7 +33,7 @@ function utils.load_session(filename, discard_current)
   if not discard_current then
     -- Ask to save files in current session before closing them
     for _, buffer in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_get_option(buffer, 'modified') then
+      if vim.bo[buffer].modified then
         local choice = vim.fn.confirm(
           'The files in the current session have changed. Save changes?',
           '&Yes\n&No\n&Cancel'
@@ -49,7 +49,9 @@ function utils.load_session(filename, discard_current)
   end
 
   -- Stop all LSP clients first
-  vim.lsp.stop_client(vim.lsp.get_clients())
+  for _, client in ipairs(vim.lsp.get_clients()) do
+    client:stop()
+  end
 
   -- Scedule buffers cleanup to avoid callback issues and source the session
   vim.schedule(function()
@@ -141,8 +143,7 @@ function utils.dir_to_session_filename(dir)
 end
 
 function utils.is_normal_buffer(buffer)
-  return #vim.api.nvim_buf_get_option(buffer, 'buftype') == 0
-    and vim.api.nvim_buf_get_option(buffer, 'buflisted')
+  return #vim.bo[buffer].buftype == 0 and vim.bo[buffer].buflisted
 end
 
 function utils.is_normal_buffer_present()
