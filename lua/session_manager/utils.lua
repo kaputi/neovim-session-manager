@@ -142,6 +142,21 @@ function utils.dir_to_session_filename(dir)
   return Path:new(config.sessions_dir):joinpath(filename).filename
 end
 
+function utils.get_git_branch(dir)
+  local result = vim.fn.systemlist({
+    'git',
+    '-C',
+    tostring(dir),
+    'rev-parse',
+    '--abbrev-ref',
+    'HEAD',
+  })
+  if vim.v.shell_error == 0 and result[1] and result[1] ~= '' then
+    return result[1]
+  end
+  return nil
+end
+
 function utils.is_normal_buffer(buffer)
   return #vim.bo[buffer].buftype == 0 and vim.bo[buffer].buflisted
 end

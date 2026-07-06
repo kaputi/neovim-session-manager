@@ -18,10 +18,14 @@ local function select_session(opts)
     finder = finders.new_table({
       results = utils.get_sessions(),
       entry_maker = function(entry)
+        local dir_path = entry.dir.filename
+        local branch = utils.get_git_branch(dir_path)
+        local display = branch and (dir_path .. ' (' .. branch .. ')')
+          or dir_path
         return {
           value = entry.filename,
-          display = entry.dir.filename,
-          ordinal = entry.dir.filename,
+          display = display,
+          ordinal = display,
         }
       end,
     }),
